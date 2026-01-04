@@ -160,6 +160,7 @@ namespace local_ai
 
        //control settings
        llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.7f));
+       //top p set to 90% to filter out unlikely tokens
        llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.9f, 1));
        //fixed seed
        llama_sampler_chain_add(sampler, llama_sampler_init_dist(1));
