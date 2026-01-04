@@ -11,6 +11,19 @@
 
 namespace local_ai
 {
+    // ANSI color codes
+    namespace color
+    {
+        const char* RESET   = "\033[0m";
+        const char* RED     = "\033[31m";
+        const char* GREEN   = "\033[32m";
+        const char* YELLOW  = "\033[33m";
+        const char* BLUE    = "\033[34m";
+        const char* MAGENTA = "\033[35m";
+        const char* CYAN    = "\033[36m";
+        const char* BOLD    = "\033[1m";
+        const char* DIM     = "\033[2m";
+    }
     const char* SYSTEM_PROMPT = R"(You are a local AI assistant running on the user's machine.
     You can execute shell commands to help accomplish tasks.
 
@@ -44,12 +57,13 @@ namespace local_ai
 
         for (int i = 0; i < MAX_ITERATIONS; i++)
         {
-            std::cout << "\n";
+            std::cout << "\n" << color::GREEN;
 
             std::string response = llm.generate(context, 1024, [](const std::string& token)
                     {
                         std::cout << token << std::flush;
                     });
+            std::cout << color::RESET;
             
             auto tool_call = local_ai::parse_tool_call(response);
 
@@ -58,13 +72,13 @@ namespace local_ai
                 auto cmd_it = tool_call->args.find("command");
                 if (cmd_it != tool_call->args.end())
                 {
-                    std::cout << "[Executing: " << cmd_it->second << "]\n";
+                    std::cout << color::YELLOW << "[Executing: " << cmd_it->second << "]" << color::RESET << "\n";
                     auto result = local_ai::execute_shell(cmd_it->second);
 
-                    std::cout << result.output;
+                    std::cout << color::CYAN << result.output << color::RESET;
                     if (result.exit_code != 0)
                     {
-                        std::cout << "[Exit code: " << result.exit_code << "]\n";
+                        std::cout << color::RED << "[Exit code: " << result.exit_code << "]" << color::RESET << "\n";
                     }
 
 
@@ -130,22 +144,26 @@ int main(int argc, char** argv)
         return 1;                    
     }
     //load the model
-    std::cout << "Loading model: " << model_path << "\n";
+    std::cout << local_ai::color::DIM << "Loading model: " << model_path << "..." << local_ai::color::RESET << "\n";
     local_ai::LLM llm;
 
     if (!llm.load(model_path, n_ctx, num_gpu_layers))
     {
-        std::cerr << "Failed to load model\n";
+        std::cerr << local_ai::color::RED << "Failed to load model" << local_ai::color::RESET << "\n";
         return 1;
     }
-    std::cout << "Model loaded successfully.\n";
-    std::cout << "Local AI Assistant (type 'exit' to quit)\n";
-    std::cout << "=========================================\n";
+    std::cout << local_ai::color::GREEN << "Model loaded successfully." << local_ai::color::RESET << "\n";
+    std::cout << local_ai::color::BOLD << local_ai::color::CYAN << "Local AI Assistant" << local_ai::color::RESET;
+    std::cout << local_ai::color::DIM << " (type 'exit' to quit)" << local_ai::color::RESET << "\n";
+    std::cout << local_ai::color::CYAN << "==========================================" << local_ai::color::RESET << "\n";
     //Main loop
                                                                  
-    while (true) 
+    // Colored prompt
+    std::string prompt = std::string(local_ai::color::BOLD) + local_ai::color::BLUE + "> " + local_ai::color::RESET;
+
+    while (true)
     {
-        char* line = readline("> ");
+        char* line = readline(prompt.c_str());
         if (!line)
         {
             std::cout << "\n";
@@ -178,6 +196,6 @@ int main(int argc, char** argv)
         std::cout << "\n";
     }
 
-    std::cout << "Exiting LLM application...\n";
+    std::cout << local_ai::color::DIM << "Goodbye!" << local_ai::color::RESET << "\n";
     return 0;
 }
