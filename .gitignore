@@ -1,0 +1,7 @@
+build/
+claude.md
+qwen*
+*.un~
+*.swap
+*.swp
+*CLAUDE*
