@@ -27,12 +27,12 @@ namespace local_ai
             //function to generate text from a prompt
             std::string generate(const std::string& prompt, int max_tokens = 1024, stream_callback callback = nullptr);
 
-            bool is_loaded const;
+            bool is_loaded() const;
 
         private:
             //pimpl idiom to hide ugly interface
-            struct implementation;
-            std::unique_ptr<implementation> impl_;
+            struct Impl;
+            std::unique_ptr<Impl> impl_;
 
     };
 }
