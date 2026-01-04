@@ -13,6 +13,68 @@ This project uses llama.cpp as the inference engine, and nlohmann.json for JSON 
 
 ---
 
+## Quick Start (Ubuntu)
+
+### Automated Setup
+
+```bash
+git clone https://github.com/yourusername/Local-AI.git
+cd Local-AI
+./install.sh
+```
+
+The install script will install dependencies, build the project, and optionally download a model.
+
+### Manual Setup
+
+**1. Install dependencies**
+
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake libreadline-dev git wget
+```
+
+**2. (Optional) Install CUDA for GPU acceleration**
+
+```bash
+# Install NVIDIA CUDA toolkit
+sudo apt install -y nvidia-cuda-toolkit
+
+# Verify installation
+nvcc --version
+```
+
+**3. Build the project**
+
+```bash
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+```
+
+**4. Download a model**
+
+```bash
+# Qwen2.5-Coder-7B (recommended, ~5.4GB)
+wget https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/qwen2.5-coder-7b-instruct-q5_k_m.gguf
+```
+
+**5. Run**
+
+```bash
+./local-ai --model qwen2.5-coder-7b-instruct-q5_k_m.gguf
+```
+
+### CLI Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--model <path>` | Path to GGUF model file (required) | - |
+| `--ctx <size>` | Context window size | 4096 |
+| `--gpu <layers>` | GPU layers (-1 = all, 0 = CPU only) | -1 |
+
+---
+
 ## DONE
 
 - [x] LLM loading and inference via llama.cpp
