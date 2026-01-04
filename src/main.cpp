@@ -85,14 +85,14 @@ namespace local_ai
         return final_response;
     }
 
-    void print_usage(const char* prog_name) 
+    void print_usage(const char* prog_name)
     {
-        std::cerr << "Usage: " << prog_name << " --model <path-to-gguf>";
-        std::cerr << "Options:";
-        std::cerr << "  --model <path>   Path to GGUF model file (required)";
-        std::cerr << "  --ctx <size>     Context size (default: 4096)";
-        std::cerr << "  --gpu <layers>   GPU layers (-1 = all, 0 = CPU only)";
-        std::cerr << "  --help           Show this help";                   
+        std::cerr << "Usage: " << prog_name << " --model <path-to-gguf>\n";
+        std::cerr << "Options:\n";
+        std::cerr << "  --model <path>   Path to GGUF model file (required)\n";
+        std::cerr << "  --ctx <size>     Context size (default: 4096)\n";
+        std::cerr << "  --gpu <layers>   GPU layers (-1 = all, 0 = CPU only)\n";
+        std::cerr << "  --help           Show this help\n";
     }
 }
 
@@ -129,40 +129,40 @@ int main(int argc, char** argv)
         local_ai::print_usage(argv[0]);
         return 1;                    
     }
-        //load the model
-    std::cout << "Loading model: " << model_path << "";
+    //load the model
+    std::cout << "Loading model: " << model_path << "\n";
     local_ai::LLM llm;
 
-    if (!llm.load(model_path, n_ctx, num_gpu_layers)) 
+    if (!llm.load(model_path, n_ctx, num_gpu_layers))
     {
-        std::cerr << "Failed to load model";
+        std::cerr << "Failed to load model\n";
         return 1;
     }
-    std::cout << "Model loaded successfully.";
-    std::cout << "Local AI Assistant (type 'exit' to quit)";
-    std::cout << "=========================================";
+    std::cout << "Model loaded successfully.\n";
+    std::cout << "Local AI Assistant (type 'exit' to quit)\n";
+    std::cout << "=========================================\n";
     //Main loop
                                                                  
     while (true) 
     {
         char* line = readline("> ");
-        if (!line) 
-        { 
-            std::cout << "";
+        if (!line)
+        {
+            std::cout << "\n";
             break;
         }
         std::string input(line);
         free(line);
-        
-        size_t start = input.find_first_not_of("");
-        size_t end = input.find_last_not_of("");
-                
-        if (start == std::string::npos)       
+
+        size_t start = input.find_first_not_of(" \t\n\r");
+        size_t end = input.find_last_not_of(" \t\n\r");
+
+        if (start == std::string::npos)
         {
             continue;
-        } 
+        }
         input = input.substr(start, end - start + 1);
-        
+
         if (input.empty())
         {
             continue;
@@ -176,9 +176,8 @@ int main(int argc, char** argv)
         }
         run_agent(llm, input);
         std::cout << "\n";
-
-        std::cout << "Exiting LLM application...";
-
-        return 0;
     }
+
+    std::cout << "Exiting LLM application...\n";
+    return 0;
 }

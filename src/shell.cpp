@@ -13,7 +13,7 @@ namespace local_ai
         std::string output;
 
         //redirect stderr to stdout
-        std::string full_command = command + "2>&1";
+        std::string full_command = command + " 2>&1";
         
         //popen could be vulnerable to shell injection so maybe change this later
         //also singlethreaded so maybe could delegate this to a worker thread

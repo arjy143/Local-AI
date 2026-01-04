@@ -40,8 +40,11 @@ namespace local_ai
     LLM& LLM::operator=(LLM&&) noexcept = default;
   
     bool LLM::load(const std::string& model_path, int context, int num_gpu_layers)
-    {    
-        //initialise global state, set up cuda. call once per process 
+    {
+        //suppress llama.cpp debug messages
+        llama_log_set([](enum ggml_log_level, const char*, void*){}, nullptr);
+
+        //initialise global state, set up cuda. call once per process
         llama_backend_init(); 
     
         llama_model_params model_params = llama_model_default_params(); 

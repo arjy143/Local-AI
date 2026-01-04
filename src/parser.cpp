@@ -29,7 +29,7 @@ namespace local_ai
 
             if (depth == 0)
             {
-                end = i-1;
+                end = i;
                 break;
             }
         }
@@ -39,7 +39,7 @@ namespace local_ai
             return std::nullopt;
         }
 
-        std::string json_string = response.substr(start, end-start);
+        std::string json_string = response.substr(start, end - start + 1);
 
         //try and parse the json string
         try
