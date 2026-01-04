@@ -22,6 +22,7 @@ namespace local_ai
             LLM& operator=(LLM&&) noexcept;
 
             //function to load a gguf LLM file. default context = 4096 tokens, default gpu = -1, meaning all layers are offloaded to gpu.
+            //gpu = 0 means cpu only
             bool load(const std::string& model_path, int context = 4096, int num_gpu_layers = -1);
             
             //function to generate text from a prompt

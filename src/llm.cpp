@@ -77,8 +77,138 @@ namespace local_ai
     //function to generate text from a prompt 
     std::string LLM::generate(const std::string& prompt, int max_tokens, stream_callback callback)
     {
-        
-    }
+       //tokenise, evaluate, sample, decode, repeat 
+       if (!is_loaded())
+       {
+           return "Model failed to load";
+       }
+
+       //tokenise
+       std::vector<llama_token> tokens(prompt.size() + 32);
+       int n_tokens = llama_tokenize(
+               impl_->vocab,
+               prompt.c_str(),
+               prompt.size(),
+               tokens.data(),
+               tokens.size(),
+               true, true //add beginning of sequence token, and parse special tokens
+               );
+
+       //if the buffer was too small, resize and try again
+       if (n_tokens < 0)
+       {
+           tokens.resize(-n_tokens);
+           n_tokens = llama_tokenize(
+                   impl_->vocab,
+                   prompt.c_str(),
+                   prompt.size(),
+                   tokens.data(),
+                   tokens.size(),
+                   true, true //add beginning of sequence token, and parse special tokens
+                   );
+       }
+
+       //if it happens again, just fail
+       if (n_tokens < 0)
+       {
+           return "Failed to tokenise";
+       }
+       tokens.resize(n_tokens);
+
+       //if the prompt does not fit in the context window
+       if (n_tokens > impl_->context - 4)
+       {
+           return "Prompt did not fit in context window";
+       }
+       //maybe remove the below if we want to have memory across generations
+       llama_kv_cache_clear(impl_->ctx);
+
+       llama_batch batch = llama_batch_init(512, 0, 1);
+
+       //loop to chunk the prompt to fit gpu memory and match llama.cpp expectations
+       for (int i = 0; i < n_tokens; i += 512)
+       {
+           batch.n_tokens = 0;
+           int batch_end = std::min(i+512, n_tokens);
+           for (int j = i; j < batch_end; j++)
+           {
+               batch.token[batch.n_tokens] = tokens[j];
+               batch.pos[batch.n_tokens] = j;
+               batch.n_seq_id[batch.n_tokens] = 1;
+               batch.seq_id[batch.n_tokens][0] = 0;
+
+               //get logits for last token only to save compute
+               batch.logits[batch.n_tokens] = (j == n_tokens -1);
+               batch.n_tokens++;
+           }
+
+           //llama_decode will run the model, fill kv cache
+           if (llama_decode(impl_->ctx, batch) != 0)
+           {
+               llama_batch_free(batch);
+               return "Failed to process prompt.";
+           }
+       }
+
+       //now to generate new tokens - autoregressive loop
+       std::string result;
+       int n_cur = n_tokens;
+
+       llama_sampler* sampler = llama_sampler_chain_init(
+               llama_sampler_chain_default_params()
+               );
+
+       //control settings
+       llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.7f));
+       llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.9f, 1));
+       //fixed seed
+       llama_sampler_chain_add(sampler, llama_sampler_init_dist(1));
+
+       //stop when eos reached, or when max tokens reached
+       while (n_cur < n_tokens + max_tokens)
+       {
+           llama_token new_token = llama_sampler_sample(sampler, impl_->ctx, -1);
+
+           //end of generation
+           if (llama_vocab_is_eog(impl_->vocab, new_token))
+           {
+               break;
+           }
+
+           char buffer[256];
+           //convert token to string
+           int n = llama_token_to_piece(impl_->vocab, new_token, buffer, sizeof(buffer), 0, true);
+           if (n > 0)
+           {
+               std::string piece(buffer, n);
+               result += piece;
+
+               if (callback)
+               {
+                   //use callback for streaming, so it feels nice to use
+                   callback(piece);
+               }
+           }
+           batch.n_tokens = 0;
+           batch.token[0] = new_token;
+           batch.pos[0] = n_cur;
+           batch.n_seq_id[0] = 1;
+           batch.seq_id[0][0] = 0;
+           batch.logits[0] = true;
+           batch.n_tokens = 1;
+            
+           if (llama_decode(impl_->ctx, batch) != 0)
+           {
+               break;
+           }
+           n_cur++;
+       }
+
+       llama_sampler_free(sampler);
+       llama_batch_free(batch);
+
+       return result;
+}
           
   
     bool LLM::is_loaded() const
