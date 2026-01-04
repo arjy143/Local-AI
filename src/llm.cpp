@@ -121,7 +121,7 @@ namespace local_ai
            return "Prompt did not fit in context window";
        }
        //maybe remove the below if we want to have memory across generations
-       llama_kv_cache_clear(impl_->ctx);
+       llama_memory_clear(llama_get_memory(impl_->ctx), true);
 
        llama_batch batch = llama_batch_init(512, 0, 1);
 

@@ -1,9 +1,9 @@
 #include "parser.hpp"
-#include <nlohmann/json/hpp>
+#include <nlohmann/json.hpp>
 
 namespace local_ai
 {
-    std::optional<ToolCall> parse_tool_call(const std::string& response) noexcept;
+    std::optional<ToolCall> parse_tool_call(const std::string& response) noexcept
     {
         //parse response for json object
         size_t start = response.find('{');
